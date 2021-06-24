@@ -25,7 +25,6 @@ def get_zillow():
     This function pulls in the zillow dataframe from my sql query. I specified
     columns from sql to bring in.
     '''
-
     sql_query = '''
     SELECT *
     FROM properties_2017
@@ -175,7 +174,8 @@ def remove_outliers(df, k, columns):
     
         df = df[(df[i] <= upper_bound) & (df[i] >= lower_bound)]
         print('-----------------')
-    return print('Dataframe now has ', df.shape[0], 'rows and ', df.shape[1], 'columns')
+        print('Dataframe now has ', df.shape[0], 'rows and ', df.shape[1], 'columns')
+    return df
 
 
 def drop_nulls(df, prop_required_column = .5, prop_required_row = .5):
@@ -212,18 +212,70 @@ def impute(df, strategy_method, column_list):
 
 
 def clean_zillow(df):
-    ''' Prepare Zillow Data
+    '''
+    This function takes in the zillow dataframe and cleans and prepares it by dropping nulls, dropping
+    duplicates, replacing whitespaces, renaming columns and creating a new tax rate column.
     '''
     
-    # dropping the columns with 17K missing values too much to fill/impute/drop rows
-    df = df.drop(columns=['heatingorsystemtypeid', 'buildingqualitytypeid', 'propertyzoningdesc', 'unitcnt', 'heatingorsystemdesc'])
+    # filter my dataframe to single unit homes
+    df = df[(df.propertylandusedesc == 'Single Family Residential') |
+          (df.propertylandusedesc == 'Mobile Home') |
+          (df.propertylandusedesc == 'Manufactured, Modular, Prefabricated Homes') |
+          (df.propertylandusedesc == 'Townhouse') |
+          (df.propertylandusedesc == 'Condominium')]
+
+    # drop any duplicates from the dataframe
+    df.drop_duplicates(inplace=True)
+
+    # this section addresses my fips code and 
+    df['fips'] = df['fips'].astype(str)
+    df.loc[df['fips'].str[0] == '6','state'] = 'California'
+    df.loc[df['fips'].str.contains('111'),'county'] = 'Ventura'
+    df.loc[df['fips'].str.contains('037'),'county'] = 'Los Angeles'
+    df.loc[df['fips'].str.contains('059'),'county'] = 'Orange'
+    df['fips'] = df['fips'].astype(float)
+
+    # create a tax rate column
+    df['tax_rate'] = (df['taxamount']/df['taxvaluedollarcnt'] * 100)
+
+    # create an abs logerror column
+    df['abs_logerr'] = df.logerror.apply(lambda x: x if x >= 0 else -x)
+
+    # create a price per squarefoot column
+    df['price_per_sqft'] = round(df['taxvaluedollarcnt'] / df['calculatedfinishedsquarefeet'], 2)
     
-    # imputing discrete columns with most frequent value
-    df = impute(df, 'most_frequent', ['calculatedbathnbr', 'fullbathcnt', 'regionidcity', 'regionidzip', 'yearbuilt', 'censustractandblock'])
+    # create a column for home age
+    df['home_age'] = 2017 - df['yearbuilt']
+
+    # let's rename our columns so they are more clear
+    df.rename(columns={'bedroomcnt': 'num_bedroom', 
+                     'bathroomcnt': 'num_bathroom',
+                     'calculatedfinishedsquarefeet': 'finished_sqft',
+                     'taxvaluedollarcnt': 'tax_value',
+                     'yearbuilt': 'build_year',
+                     'taxamount': 'tax_amount',
+                     'lotsizesquarefeet': 'total_lot_sqft',
+                      'logerror': 'log_error',
+                      'propertylandusedesc': 'home_type',
+                      'regionidzip': 'zip_code',
+                      'structuretaxvaluedollarcnt': 'structure_tax_value'}, inplace=True)
     
-    # imputing continuous columns with median value
-    df = impute(df, 'median', ['finishedsquarefeet12', 'lotsizesquarefeet', 'structuretaxvaluedollarcnt', 'taxvaluedollarcnt', 'landtaxvaluedollarcnt', 'taxamount'])
+    # change transactiondate to int
+    df['transactiondate']=(df['transactiondate'].str.replace(' ','').str.replace('-',''))
+    df['transactiondate'] = df['transactiondate'].astype('int')
+    # bin transaction date by year quarters
+    df['quadrimester'] = pd.cut(df.transactiondate, bins = [ 20170100, 20170500, 20170900, 20171230],
+                                 labels = [1,2,3])
     
+
+    # now that we've been able to drop any houses with duplicate parcel ids, we can drop the column
+    df.drop(columns=['parcelid', 'propertylandusetypeid', 'id', 'calculatedbathnbr', 'fips',
+                    'rawcensustractandblock', 'finishedsquarefeet12', 'fullbathcnt',
+                    'propertycountylandusecode', 'regionidcounty', 'roomcnt', 'assessmentyear',
+                    'landtaxvaluedollarcnt', 'transactiondate', 'latitude', 'longitude', 'state',
+                    'censustractandblock', 'regionidcity'], inplace=True)
+
+
     return df
 
 
@@ -245,3 +297,45 @@ def split_data(df):
     print('test--->', test.shape)
     return train, validate, test
 
+
+
+## MY MINMAX SCALER FUNCTION
+def min_max_scaler(X_train, X_validate, X_test, numeric_cols):
+    """
+    this function takes in 3 dataframes with the same columns,
+    a list of numeric column names (because the scaler can only work with numeric columns),
+    and fits a min-max scaler to the first dataframe and transforms all
+    3 dataframes using that scaler.
+    it returns 3 dataframes with the same column names and scaled values.
+    """
+    # create the scaler object and fit it to X_train (i.e. identify min and max)
+    # if copy = false, inplace row normalization happens and avoids a copy (if the input is already a numpy array).
+
+    scaler = MinMaxScaler(copy=True).fit(X_train[numeric_cols])
+
+    # scale X_train, X_validate, X_test using the mins and maxes stored in the scaler derived from X_train.
+    #
+    X_train_scaled_array = scaler.transform(X_train[numeric_cols])
+    X_validate_scaled_array = scaler.transform(X_validate[numeric_cols])
+    X_test_scaled_array = scaler.transform(X_test[numeric_cols])
+
+    # convert arrays to dataframes
+    X_train_scaled = pd.DataFrame(X_train_scaled_array, columns=numeric_cols).set_index(
+        [X_train.index.values]
+    )
+
+    X_validate_scaled = pd.DataFrame(
+        X_validate_scaled_array, columns=numeric_cols
+    ).set_index([X_validate.index.values])
+
+    X_test_scaled = pd.DataFrame(X_test_scaled_array, columns=numeric_cols).set_index(
+        [X_test.index.values]
+    )
+
+    # Overwriting columns in our input dataframes for simplicity
+    for i in numeric_cols:
+        X_train[i] = X_train_scaled[i]
+        X_validate[i] = X_validate_scaled[i]
+        X_test[i] = X_test_scaled[i]
+
+    return X_train, X_validate, X_test
