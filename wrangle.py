@@ -252,7 +252,6 @@ def clean_zillow(df):
                      'bathroomcnt': 'num_bathroom',
                      'calculatedfinishedsquarefeet': 'finished_sqft',
                      'taxvaluedollarcnt': 'tax_value',
-                     'yearbuilt': 'build_year',
                      'taxamount': 'tax_amount',
                      'lotsizesquarefeet': 'total_lot_sqft',
                       'logerror': 'log_error',
@@ -266,6 +265,7 @@ def clean_zillow(df):
     # bin transaction date by year quarters
     df['quadrimester'] = pd.cut(df.transactiondate, bins = [ 20170100, 20170500, 20170900, 20171230],
                                  labels = [1,2,3])
+    df['quadrimester'] = df.quadrimester.astype(int)
     
 
     # now that we've been able to drop any houses with duplicate parcel ids, we can drop the column
@@ -273,7 +273,7 @@ def clean_zillow(df):
                     'rawcensustractandblock', 'finishedsquarefeet12', 'fullbathcnt',
                     'propertycountylandusecode', 'regionidcounty', 'roomcnt', 'assessmentyear',
                     'landtaxvaluedollarcnt', 'transactiondate', 'latitude', 'longitude', 'state',
-                    'censustractandblock', 'regionidcity'], inplace=True)
+                    'censustractandblock', 'regionidcity', 'yearbuilt'], inplace=True)
 
 
     return df
@@ -338,4 +338,4 @@ def min_max_scaler(X_train, X_validate, X_test, numeric_cols):
         X_validate[i] = X_validate_scaled[i]
         X_test[i] = X_test_scaled[i]
 
-    return X_train, X_validate, X_test
+    return X_train, X_validate, X_test, scaler
