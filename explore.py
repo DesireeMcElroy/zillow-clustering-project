@@ -27,7 +27,7 @@ def create_cluster(train_scaled, X, k, cluster_name):
     kmeans.fit(X)
     kmeans.predict(X)
     train_scaled[cluster_name] = kmeans.predict(X)
-    train_scaled[cluster_name] = 'cluster_' + train_scaled[cluster_name].astype(str)
+    # train_scaled[cluster_name] = 'cluster_' + train_scaled[cluster_name].astype(str)
     centroids = pd.DataFrame(scaler.inverse_transform(kmeans.cluster_centers_), columns=X.columns)
     return train_scaled, X, scaler, kmeans, centroids
 
