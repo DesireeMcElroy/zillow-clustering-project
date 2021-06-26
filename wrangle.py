@@ -272,7 +272,7 @@ def clean_zillow(df):
     df.drop(columns=['parcelid', 'propertylandusetypeid', 'id', 'calculatedbathnbr', 'fips',
                     'rawcensustractandblock', 'finishedsquarefeet12', 'fullbathcnt',
                     'propertycountylandusecode', 'regionidcounty', 'roomcnt', 'assessmentyear',
-                    'landtaxvaluedollarcnt', 'transactiondate', 'latitude', 'longitude', 'state',
+                    'landtaxvaluedollarcnt', 'transactiondate', 'state',
                     'censustractandblock', 'regionidcity', 'yearbuilt'], inplace=True)
 
 
