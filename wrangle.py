@@ -219,9 +219,7 @@ def clean_zillow(df):
     
     # filter my dataframe to single unit homes
     df = df[(df.propertylandusedesc == 'Single Family Residential') |
-          (df.propertylandusedesc == 'Mobile Home') |
           (df.propertylandusedesc == 'Manufactured, Modular, Prefabricated Homes') |
-          (df.propertylandusedesc == 'Townhouse') |
           (df.propertylandusedesc == 'Condominium')]
 
     # drop any duplicates from the dataframe
@@ -273,7 +271,11 @@ def clean_zillow(df):
                     'rawcensustractandblock', 'finishedsquarefeet12', 'fullbathcnt',
                     'propertycountylandusecode', 'regionidcounty', 'roomcnt', 'assessmentyear',
                     'landtaxvaluedollarcnt', 'transactiondate', 'state',
-                    'censustractandblock', 'regionidcity', 'yearbuilt'], inplace=True)
+                    'censustractandblock', 'regionidcity', 'yearbuilt', 'zip_code'], inplace=True)
+
+    # dropping these two rows that are equal to Ventura for county. 
+    # Because there are only two ventura county rows, this creates an issue when splitting data
+    df = df.drop(index=[34551, 53246])
 
 
     return df
