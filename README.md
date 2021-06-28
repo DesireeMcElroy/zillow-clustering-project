@@ -64,11 +64,12 @@ quadrimester | Calendar year divided into three | int
 abs_logerr | The absolute value of log error | float
 
 ## Results
-The ### model outperformed the baseline:
-1. Lowest RMSE value of .015.
-2. Performed poorly on test dataset
+Model 3 using PolynomialRegression narrowly outperformed the baseline model:
+1. Baseline model achieved root mean square error (RMSE) of .16 and .17 on train and validate test sets respectively.
+2. Model 3 achieved RMSE of .15 and .17 on train and validate test sets respectively.
+3. Model 3 resulted in RMSE of .14 on the unseen test data set. Arguably a good performance.
 
-Need to improve model since it performed so poorly on test dataset.
+
 
 ## Recommendations
 1. I would conduct a lot more statistical testing to be sure I binned my data correctly.
