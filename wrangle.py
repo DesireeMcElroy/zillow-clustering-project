@@ -23,7 +23,7 @@ def get_connection(db_name):
 def get_zillow():
     '''
     This function pulls in the zillow dataframe from my sql query. I specified
-    columns from sql to bring in.
+    columns and filters from sql to bring in.
     '''
     sql_query = '''
     SELECT *
@@ -147,7 +147,7 @@ def nulls_by_row(df):
 def show_outliers(df, k, columns):
     '''
     calculates the lower and upper bound to locate outliers and displays them
-    recommended k be 1.5 and entered as integer
+    note: recommended k be 1.5 and entered as integer
     '''
     for i in columns:
         quartile1, quartile3 = np.percentile(df[i], [25,75])
@@ -162,7 +162,7 @@ def show_outliers(df, k, columns):
 def remove_outliers(df, k, columns):
     '''
     calculates the lower and upper bound to locate outliers in variables and then removes them.
-    recommended k be 1.5 and entered as integer
+    note: recommended k be 1.5 and entered as integer
     '''
     for i in columns:
         quartile1, quartile3 = np.percentile(df[i], [25,75])
@@ -214,7 +214,7 @@ def impute(df, strategy_method, column_list):
 def clean_zillow(df):
     '''
     This function takes in the zillow dataframe and cleans and prepares it by dropping nulls, dropping
-    duplicates, replacing whitespaces, renaming columns and creating a new tax rate column.
+    duplicates, replacing whitespaces, renaming columns and creating a new tax_rate, quadrimester and abs_logerr column.
     '''
     
     # filter my dataframe to single unit homes
@@ -286,7 +286,6 @@ def split_data(df):
     '''
     This function takes in a dataframe and splits it into train, test, and 
     validate dataframes for my model
-    Do this only after you split to avoid data leakage
     '''
 
     train_validate, test = train_test_split(df, test_size=.2, 
