@@ -22,7 +22,7 @@ def create_cluster(train_scaled, X, k, cluster_name):
     and the name you want to name the column (enter column as string)
     It scales the X, calcuates the clusters and return train (with clusters), the Scaled dataframe,
     the scaler and kmeans object and unscaled centroids as a dataframe
-    train_scaled enter the scaled train dataframe
+    note: train_scaled enter the scaled train dataframe
     for X enter the dataframe of the two features for your cluster
     for k enter number of features
     for cluster_name enter name of the cluster column name you want as a string
